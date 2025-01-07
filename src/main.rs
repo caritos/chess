@@ -15,6 +15,18 @@ fn main() {
     for (r, c) in pawn_moves {
         println!("({},{})", r, c);
     }
+
+    println!("\nMoves for white rook at (7, 0):");
+    let rook_moves = generate_rook_moves(&board, 7, 0, true);
+    for (r, c) in rook_moves {
+        println!("({},{})", r, c);
+    }
+
+    println!("\nMoves for black rook at (0, 0):");
+    let rook_moves = generate_rook_moves(&board, 0, 0, false);
+    for (r, c) in rook_moves {
+        println!("({},{})", r, c);
+    }
 }
 
 
@@ -122,3 +134,37 @@ fn generate_pawn_moves(board: &Board, row: usize, col: usize, is_white: bool) ->
     moves
 }
 
+       }
+    }
+
+    moves
+}
+
+fn generate_rook_moves(board: &Board, row: usize, col: usize, is_white: bool) -> Vec<(usize, usize)> {
+    let mut moves = Vec::new();
+
+    // Directions: up, down, left, right
+    let directions = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+
+    for &(dr, dc) in directions.iter() {
+        let mut next_row = row as isize + dr;
+        let mut next_col = col as isize + dc;
+
+        while is_in_bounds(next_row, next_col) {
+            let target = board[next_row as usize][next_col as usize];
+
+            if target.is_none() {
+                // Empty square
+                moves.push((next_row as usize, next_col as usize));
+            } else if is_opponent(target, is_white) {
+                // Capture opponent piece
+                moves.push((next_row as usize, next_col as usize));
+                break; // Stop further movement in this direction
+            } else {
+                // Blocked by same color piece
+ break;
+            }
+
+            next_row += dr;
+            next_col += dc;
+ 
