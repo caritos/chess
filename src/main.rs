@@ -1,41 +1,6 @@
-
-// using 2d array representation for simplicity
-fn main() {
-    let board = initialize_board();
-    print_board(&board);
-
-    println!("\nMoves for white pawn at (6, 4):");
-    let pawn_moves = generate_pawn_moves(&board, 6, 4, true);
-    for (r, c) in pawn_moves {
-        println!("({},{})", r, c);
-    }
-
-    println!("\nMoves for black pawn at (1, 4):");
-    let pawn_moves = generate_pawn_moves(&board, 1, 4, false);
-    for (r, c) in pawn_moves {
-        println!("({},{})", r, c);
-    }
-
-    println!("\nMoves for white rook at (7, 0):");
-    let rook_moves = generate_rook_moves(&board, 7, 0, true);
-    for (r, c) in rook_moves {
-        println!("({},{})", r, c);
-    }
-
-    println!("\nMoves for black rook at (0, 0):");
-    let rook_moves = generate_rook_moves(&board, 0, 0, false);
-    for (r, c) in rook_moves {
-        println!("({},{})", r, c);
-    }
-}
-
-
-type Board = [[Option<Piece>; 8]; 8];
-
-#[derive(Debug, Clone, Copy)] // allows us to print the pieces for debugging and enables easy
-                              // copying of the pieces when needed, espeically for a board array
+#[derive(Debug, Clone, Copy)]
 enum Piece {
-    King(bool),   // true for white, false for black
+    King(bool),    // true = white, false = black
     Queen(bool),
     Rook(bool),
     Bishop(bool),
@@ -43,29 +8,55 @@ enum Piece {
     Pawn(bool),
 }
 
-fn initialize_board() -> [[Option<Piece>; 8]; 8] {
-    use Piece::*;
-    [
-        [Some(Rook(false)), Some(Knight(false)), Some(Bishop(false)), Some(Queen(false)), Some(King(false)), Some(Bishop(false)), Some(Knight(false)), Some(Rook(false))],
-        [Some(Pawn(false)); 8],
-        [None; 8],
-        [None; 8],
-        [None; 8],
-        [None; 8],
-        [Some(Pawn(true)); 8],
-        [Some(Rook(true)), Some(Knight(true)), Some(Bishop(true)), Some(Queen(true)), Some(King(true)), Some(Bishop(true)), Some(Knight(true)), Some(Rook(true))],
-    ]
+type Board = [[Option<Piece>; 8]; 8];
+
+fn initialize_board() -> Board {
+    let mut board = [[None; 8]; 8];
+
+    // Place pawns
+    for col in 0..8 {
+        board[1][col] = Some(Piece::Pawn(false)); // Black pawns
+        board[6][col] = Some(Piece::Pawn(true));  // White pawns
+    }
+
+    // Place rooks
+    board[0][0] = Some(Piece::Rook(false));
+    board[0][7] = Some(Piece::Rook(false));
+    board[7][0] = Some(Piece::Rook(true));
+    board[7][7] = Some(Piece::Rook(true));
+
+    // Place knights
+    board[0][1] = Some(Piece::Knight(false));
+    board[0][6] = Some(Piece::Knight(false));
+    board[7][1] = Some(Piece::Knight(true));
+    board[7][6] = Some(Piece::Knight(true));
+
+    // Place bishops
+    board[0][2] = Some(Piece::Bishop(false));
+    board[0][5] = Some(Piece::Bishop(false));
+    board[7][2] = Some(Piece::Bishop(true));
+    board[7][5] = Some(Piece::Bishop(true));
+
+    // Place queens
+    board[0][3] = Some(Piece::Queen(false));
+    board[7][3] = Some(Piece::Queen(true));
+
+    // Place kings
+    board[0][4] = Some(Piece::King(false));
+    board[7][4] = Some(Piece::King(true));
+
+    board
 }
 
 fn print_board(board: &Board) {
     for row in board.iter() {
         for cell in row.iter() {
             match cell {
-                Some(piece) => print!("{:?} ", piece_to_symbol(piece)),
-                None => print!(". "),
+                Some(piece) => print!("{} ", piece_to_symbol(piece)),
+                None => print!(". "), // Empty squares
             }
         }
-        println!();
+        println!(); // Newline at the end of each row
     }
 }
 
@@ -102,44 +93,6 @@ fn is_opponent(piece: Option<Piece>, is_white: bool) -> bool {
     }
 }
 
-fn generate_pawn_moves(board: &Board, row: usize, col: usize, is_white: bool) -> Vec<(usize, usize)> {
-    let mut moves = Vec::new();
-    let direction = if is_white { -1 } else { 1 }; // White moves up, black moves down
-
-    // Forward move
-    let next_row = row as isize + direction;
-    if is_in_bounds(next_row, col as isize) && board[next_row as usize][col].is_none() {
-        moves.push((next_row as usize, col));
-
-        // Double move from starting position
-        if (is_white && row == 6) || (!is_white && row == 1) {
-            let double_row = next_row + direction;
-            if is_in_bounds(double_row, col as isize) && board[double_row as usize][col].is_none() {
-                moves.push((double_row as usize, col));
-            }
-        }
-    }
-
-    // Captures
-    for &dc in [-1, 1].iter() {
-        let capture_col = col as isize + dc;
-        if is_in_bounds(next_row, capture_col) {
-            let target = board[next_row as usize][capture_col as usize];
-            if is_opponent(target, is_white) {
-                moves.push((next_row as usize, capture_col as usize));
-            }
-        }
-    }
-
-    moves
-}
-
-       }
-    }
-
-    moves
-}
-
 fn generate_rook_moves(board: &Board, row: usize, col: usize, is_white: bool) -> Vec<(usize, usize)> {
     let mut moves = Vec::new();
 
@@ -162,9 +115,103 @@ fn generate_rook_moves(board: &Board, row: usize, col: usize, is_white: bool) ->
                 break; // Stop further movement in this direction
             } else {
                 // Blocked by same color piece
- break;
+                break;
             }
 
             next_row += dr;
             next_col += dc;
- 
+        }
+    }
+
+    moves
+}
+
+fn generate_bishop_moves(board: &Board, row: usize, col: usize, is_white: bool) -> Vec<(usize, usize)> {
+    let mut moves = Vec::new();
+
+    // Directions: top-left, top-right, bottom-left, bottom-right
+    let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
+
+    for &(dr, dc) in directions.iter() {
+        let mut next_row = row as isize + dr;
+        let mut next_col = col as isize + dc;
+
+        while is_in_bounds(next_row, next_col) {
+            let target = board[next_row as usize][next_col as usize];
+
+            if target.is_none() {
+                // Empty square
+                moves.push((next_row as usize, next_col as usize));
+            } else if is_opponent(target, is_white) {
+                // Capture opponent piece
+                moves.push((next_row as usize, next_col as usize));
+                break; // Stop further movement in this direction
+            } else {
+                // Blocked by same color piece
+                break;
+            }
+
+            next_row += dr;
+            next_col += dc;
+        }
+    }
+
+    moves
+}
+
+
+fn main() {
+    let mut board = initialize_board();
+    print_board(&board);
+
+    println!("\nMoves for white rook at (7, 0):");
+    let rook_moves = generate_rook_moves(&board, 7, 0, true);
+    for (r, c) in rook_moves {
+        println!("({},{})", r, c);
+    }
+
+    println!("\nMoves for black rook at (0, 0):");
+    let rook_moves = generate_rook_moves(&board, 0, 0, false);
+    for (r, c) in rook_moves {
+        println!("({},{})", r, c);
+    }
+
+    // Test with a modified board (remove pawns)
+    board[6][0] = None; // Remove white pawn in front of white rook
+    board[1][0] = None; // Remove black pawn in front of black rook
+
+    println!("\nModified board:");
+    print_board(&board);
+
+    println!("\nMoves for white rook at (7, 0) after modification:");
+    let rook_moves = generate_rook_moves(&board, 7, 0, true);
+    for (r, c) in rook_moves {
+        println!("({},{})", r, c);
+    }
+
+    println!("\nMoves for white bishop at (7, 2):");
+let bishop_moves = generate_bishop_moves(&board, 7, 2, true);
+for (r, c) in bishop_moves {
+    println!("({},{})", r, c);
+}
+
+println!("\nMoves for black bishop at (0, 2):");
+let bishop_moves = generate_bishop_moves(&board, 0, 2, false);
+for (r, c) in bishop_moves {
+    println!("({},{})", r, c);
+}
+
+// Test with a modified board (remove pawns)
+board[6][1] = None; // Remove white pawn blocking the white bishop
+board[6][3] = None; // Remove white pawn blocking the white bishop
+
+println!("\nModified board:");
+print_board(&board);
+
+println!("\nMoves for white bishop at (7, 2) after modification:");
+let bishop_moves = generate_bishop_moves(&board, 7, 2, true);
+for (r, c) in bishop_moves {
+    println!("({},{})", r, c);
+}
+}
+
